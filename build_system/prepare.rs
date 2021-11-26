@@ -34,6 +34,25 @@ pub(crate) fn prepare() {
     );
     apply_patches("portable-simd", Path::new("portable-simd"));
 
+    let mut build_cmd = Command::new("git");
+    build_cmd.arg("init").current_dir("build_sysroot/sysroot_src/library/portable-simd");
+    spawn_and_wait(build_cmd);
+
+    let mut git_add_cmd = Command::new("git");
+    git_add_cmd.arg("add").arg(".").current_dir("build_sysroot/sysroot_src/library/portable-simd");
+    spawn_and_wait(git_add_cmd);
+
+    let mut git_commit_cmd = Command::new("git");
+    git_commit_cmd
+        .arg("commit")
+        .arg("-m")
+        .arg("Initial commit")
+        .arg("-q")
+        .current_dir("build_sysroot/sysroot_src/library/portable-simd");
+    spawn_and_wait(git_commit_cmd);
+
+    apply_patches("portable-simd", Path::new("build_sysroot/sysroot_src/library/portable-simd"));
+
     clone_repo(
         "simple-raytracer",
         "https://github.com/ebobby/simple-raytracer",

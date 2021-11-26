@@ -3,6 +3,7 @@
 use crate::prelude::*;
 
 fn codegen_print(fx: &mut FunctionCx<'_, '_, '_>, msg: &str) {
+    return;
     let puts = fx
         .module
         .declare_function(

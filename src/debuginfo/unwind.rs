@@ -57,6 +57,7 @@ impl UnwindContext {
     }
 
     pub(crate) fn emit(self, product: &mut ObjectProduct) {
+        return;
         let mut eh_frame = EhFrame::from(super::emit::WriterRelocate::new(self.endian));
         self.frame_table.write_eh_frame(&mut eh_frame).unwrap();
 

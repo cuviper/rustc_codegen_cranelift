@@ -32,7 +32,7 @@ fn make_module(sess: &Session, isa: Box<dyn TargetIsa>, name: String) -> ObjectM
     // Unlike cg_llvm, cg_clif defaults to disabling -Zfunction-sections. For cg_llvm binary size
     // is important, while cg_clif cares more about compilation times. Enabling -Zfunction-sections
     // can easily double the amount of time necessary to perform linking.
-    builder.per_function_section(sess.opts.debugging_opts.function_sections.unwrap_or(false));
+    builder.per_function_section(sess.opts.debugging_opts.function_sections.unwrap_or(true));
     ObjectModule::new(builder)
 }
 
@@ -342,12 +342,16 @@ fn codegen_global_asm(tcx: TyCtxt<'_>, cgu_name: &str, global_asm: &str) {
     let assembler = crate::toolchain::get_toolchain_binary(tcx.sess, "as");
     let linker = crate::toolchain::get_toolchain_binary(tcx.sess, "ld");
 
+    //println!("{}", assembler.display());
+
     // Remove all LLVM style comments
     let global_asm = global_asm
         .lines()
         .map(|line| if let Some(index) = line.find("//") { &line[0..index] } else { line })
         .collect::<Vec<_>>()
         .join("\n");
+
+    //println!("{}", global_asm);
 
     let output_object_file = tcx.output_filenames(()).temp_path(OutputType::Object, Some(cgu_name));
 
@@ -365,10 +369,23 @@ fn codegen_global_asm(tcx: TyCtxt<'_>, cgu_name: &str, global_asm: &str) {
         tcx.sess.fatal(&format!("Failed to assemble `{}`", global_asm));
     }
 
+    // Remove .eh_frame section
+    let status = Command::new("objcopy")
+        .arg("--remove-section=.eh_frame")
+        .arg(&global_asm_object_file)
+        .stdin(Stdio::piped())
+        .status()
+        .unwrap();
+    if !status.success() {
+        tcx.sess.fatal(&format!("Failed to remove .eh_frame section from `{}`", global_asm_object_file.display()));
+    }
+
     // Link the global asm and main object file together
     let main_object_file = add_file_stem_postfix(output_object_file.clone(), ".main");
     std::fs::rename(&output_object_file, &main_object_file).unwrap();
-    let status = Command::new(linker)
+    let status = Command::new("/home/bjorn/.rustup/toolchains/nightly-2021-11-17-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld")
+        .arg("-flavor")
+        .arg("ld")
         .arg("-r") // Create a new object file
         .arg("-o")
         .arg(output_object_file)

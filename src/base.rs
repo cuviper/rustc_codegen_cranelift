@@ -889,9 +889,9 @@ pub(crate) fn codegen_operand<'tcx>(
 }
 
 pub(crate) fn codegen_panic<'tcx>(fx: &mut FunctionCx<'_, '_, 'tcx>, msg_str: &str, span: Span) {
-    let location = fx.get_caller_location(span).load_scalar(fx);
+    let location = fx.bcx.ins().iconst(fx.pointer_type, 0);//fx.get_caller_location(span).load_scalar(fx);
 
-    let msg_ptr = fx.anonymous_str(msg_str);
+    let msg_ptr = fx.bcx.ins().iconst(fx.pointer_type, 0);//fx.anonymous_str(msg_str);
     let msg_len = fx.bcx.ins().iconst(fx.pointer_type, i64::try_from(msg_str.len()).unwrap());
     let args = [msg_ptr, msg_len, location];
 

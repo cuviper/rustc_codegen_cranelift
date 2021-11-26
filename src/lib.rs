@@ -229,7 +229,7 @@ impl CodegenBackend for CraneliftCodegenBackend {
 }
 
 fn target_triple(sess: &Session) -> target_lexicon::Triple {
-    match sess.target.llvm_target.parse() {
+    match "x86_64-unknown-none-elf".parse() {
         Ok(triple) => triple,
         Err(err) => sess.fatal(&format!("target not recognized: {}", err)),
     }

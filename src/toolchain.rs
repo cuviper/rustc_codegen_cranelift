@@ -13,7 +13,7 @@ pub(crate) fn get_toolchain_binary(sess: &Session, tool: &str) -> PathBuf {
         .and_then(|name| name.to_str())
         .unwrap_or_else(|| sess.fatal("couldn't extract file name from specified linker"));
 
-    if linker_file_name == "ld.lld" {
+    if linker_file_name == "ld.lld" || linker_file_name == "rust-lld" {
         if tool != "ld" {
             linker.set_file_name(tool)
         }
