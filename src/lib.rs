@@ -42,10 +42,13 @@ use cranelift_codegen::settings::{self, Configurable};
 pub use crate::config::*;
 use crate::prelude::*;
 
+pub use archive2::write_archive_to_stream;
+
 mod abi;
 mod allocator;
 mod analyze;
 mod archive;
+mod archive2;
 mod base;
 mod cast;
 mod codegen_i128;
