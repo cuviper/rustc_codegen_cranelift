@@ -19,12 +19,12 @@ use crate::archive::*;
 //===----------------------------------------------------------------------===//
 
 pub struct NewArchiveMember {
-    pub(crate) buf: Vec<u8>,
-    pub(crate) member_name: String,
-    pub(crate) mtime: u64,
-    pub(crate) uid: u32,
-    pub(crate) gid: u32,
-    pub(crate) perms: u32,
+    pub buf: Vec<u8>,
+    pub member_name: String,
+    pub mtime: u64,
+    pub uid: u32,
+    pub gid: u32,
+    pub perms: u32,
 }
 
 //===- ArchiveWriter.cpp - ar File Format implementation --------*- C++ -*-===//
