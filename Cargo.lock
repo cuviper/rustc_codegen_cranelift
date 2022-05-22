@@ -156,7 +156,7 @@ dependencies = [
  "cranelift-codegen",
  "cranelift-module",
  "log",
- "object",
+ "object 0.28.4",
  "target-lexicon",
 ]
 
@@ -234,6 +234,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "llvm_archive_writer"
+version = "0.1.0"
+dependencies = [
+ "object 0.27.1",
+]
+
+[[package]]
 name = "log"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -256,6 +263,15 @@ name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
+
+[[package]]
+name = "object"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67ac1d3f9a1d3616fd9a60c8d74296f22406a238b6a72f5cc1e6f314df4ffbf9"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "object"
@@ -313,7 +329,8 @@ dependencies = [
  "gimli",
  "indexmap",
  "libloading",
- "object",
+ "llvm_archive_writer",
+ "object 0.28.4",
  "once_cell",
  "smallvec",
  "target-lexicon",
