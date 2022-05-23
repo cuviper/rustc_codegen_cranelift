@@ -167,7 +167,13 @@ fn now(deterministic: bool) -> u64 {
 }
 
 fn is_archive_symbol(sym: &object::read::Symbol<'_, '_>) -> bool {
-    // FIXME return false on the equivalent of LLVM's SymbolRef::SF_FormatSpecific
+    // FIXME Use a better equivalent of LLVM's SymbolRef::SF_FormatSpecific
+    if sym.kind() == object::SymbolKind::Null
+        || sym.kind() == object::SymbolKind::File
+        || sym.kind() == object::SymbolKind::Section
+    {
+        return false;
+    }
     if !sym.is_global() {
         return false;
     }
