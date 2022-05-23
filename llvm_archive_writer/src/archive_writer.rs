@@ -269,12 +269,13 @@ fn write_symbol_table<W: Write + Seek>(
             if is_bsd_like(kind) {
                 print_n_bits(w, kind, string_offset)?;
             }
-            print_n_bits(w, kind, pos)?;
+            print_n_bits(w, kind, pos)?; // member offset
         }
         pos += u64::try_from(m.header.len() + m.data.len() + m.padding.len()).unwrap();
     }
 
     if is_bsd_like(kind) {
+        // byte count of the string table
         print_n_bits(w, kind, u64::try_from(string_table.len()).unwrap())?;
     }
 
