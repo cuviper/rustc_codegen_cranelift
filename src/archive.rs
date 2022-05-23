@@ -51,10 +51,10 @@ impl<'a> ArchiveBuilder<'a> for ArArchiveBuilder<'a> {
         ArArchiveBuilder {
             sess,
             dst: output.to_path_buf(),
-            archive_kind: if sess.target.archive_format == "gnu" {
-                ArchiveKind::Gnu
-            } else {
-                ArchiveKind::Bsd
+            archive_kind: match &*sess.target.archive_format {
+                "gnu" => ArchiveKind::Gnu,
+                "darwin" => ArchiveKind::Darwin,
+                _ => panic!(),
             },
 
             src_archives,
