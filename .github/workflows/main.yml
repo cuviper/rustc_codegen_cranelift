@@ -28,17 +28,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- os: ubuntu-latest
+          - os: ubuntu-latest
           - os: macos-latest
           # cross-compile from Linux to Windows using mingw
-          #- os: ubuntu-latest
-          #  env:
-          #    TARGET_TRIPLE: x86_64-pc-windows-gnu
-          #- os: ubuntu-latest
-          #  env:
-          #    TARGET_TRIPLE: aarch64-unknown-linux-gnu
-
-    permissions: {}
+          - os: ubuntu-latest
+            env:
+              TARGET_TRIPLE: x86_64-pc-windows-gnu
+          - os: ubuntu-latest
+            env:
+              TARGET_TRIPLE: aarch64-unknown-linux-gnu
 
     steps:
     - uses: actions/checkout@v3
@@ -81,11 +79,6 @@ jobs:
         git config --global user.email "user@example.com"
         git config --global user.name "User"
         ./y.rs prepare
-
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      with:
-        limit-access-to-actor: true
 
     - name: Build without unstable features
       env:
