@@ -256,7 +256,7 @@ fn is_archive_symbol(sym: &object::read::Symbol<'_, '_>) -> bool {
     if !sym.is_global() {
         return false;
     }
-    if !sym.is_definition() {
+    if sym.is_undefined() {
         return false;
     }
     true
