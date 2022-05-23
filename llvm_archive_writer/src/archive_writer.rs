@@ -307,7 +307,7 @@ fn compute_member_data<'a, S: Write + Seek>(
     sym_names: &mut Cursor<Vec<u8>>,
     kind: ArchiveKind,
     thin: bool,
-    determinsitic: bool,
+    deterministic: bool,
     need_symbols: bool,
     new_members: &'a [NewArchiveMember],
 ) -> io::Result<Vec<MemberData<'a>>> {
@@ -366,7 +366,7 @@ fn compute_member_data<'a, S: Write + Seek>(
     // See also the functions that handle the lookup:
     // in lldb: ObjectContainerBSDArchive::Archive::FindObject()
     // in llvm/tools/dsymutil: BinaryHolder::GetArchiveMemberBuffers().
-    let unique_timestamps = determinsitic && is_darwin(kind);
+    let unique_timestamps = deterministic && is_darwin(kind);
     let mut filename_count = HashMap::new();
     if unique_timestamps {
         for m in new_members {
