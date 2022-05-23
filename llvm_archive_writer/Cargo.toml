@@ -3,6 +3,9 @@ name = "llvm_archive_writer"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
+description = "A rust port of LLVM's archive file writer"
+keywords = ["ar", "archive"]
+readme = "Readme.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, Read, Seek};
 use std::path::{Path, PathBuf};
 
-use llvm_archive_writer::{ArchiveKind, NewArchiveMember, write_archive_to_stream};
+use llvm_archive_writer::{write_archive_to_stream, ArchiveKind, NewArchiveMember};
 use rustc_codegen_ssa::back::archive::ArchiveBuilder;
 use rustc_session::Session;
 
@@ -145,7 +145,8 @@ impl<'a> ArchiveBuilder<'a> for ArArchiveBuilder<'a> {
             self.sess.fatal(&format!("error opening destination during archive building: {}", err));
         });
 
-        write_archive_to_stream(&mut w, &entries, true, self.archive_kind, true, false).expect("FIXME");
+        write_archive_to_stream(&mut w, &entries, true, self.archive_kind, true, false)
+            .expect("FIXME");
     }
 
     fn inject_dll_import_lib(
