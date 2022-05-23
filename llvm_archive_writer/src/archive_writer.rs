@@ -1,3 +1,12 @@
+// Derived from code in LLVM, which is:
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// Derived from:
+// * https://github.com/llvm/llvm-project/blob/8ef3e895ad8ab1724e2b87cabad1dacdc7a397a3/llvm/include/llvm/Object/ArchiveWriter.h
+// * https://github.com/llvm/llvm-project/blob/8ef3e895ad8ab1724e2b87cabad1dacdc7a397a3/llvm/lib/Object/ArchiveWriter.cpp
+
 use std::collections::HashMap;
 use std::io::{self, Cursor, Seek, Write};
 
@@ -5,18 +14,6 @@ use object::{Object, ObjectSymbol};
 
 use crate::alignment::*;
 use crate::archive::*;
-
-// Derived from:
-// * https://github.com/llvm/llvm-project/blob/8ef3e895ad8ab1724e2b87cabad1dacdc7a397a3/llvm/include/llvm/Object/ArchiveWriter.h
-// * https://github.com/llvm/llvm-project/blob/8ef3e895ad8ab1724e2b87cabad1dacdc7a397a3/llvm/lib/Object/ArchiveWriter.cpp
-
-//===- ArchiveWriter.h - ar archive file format writer ----------*- C++ -*-===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
 
 pub struct NewArchiveMember {
     pub buf: Vec<u8>,
@@ -26,88 +23,6 @@ pub struct NewArchiveMember {
     pub gid: u32,
     pub perms: u32,
 }
-
-//===- ArchiveWriter.cpp - ar File Format implementation --------*- C++ -*-===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-
-/*
-Expected<NewArchiveMember>
-NewArchiveMember::getOldMember(const object::Archive::Child &OldMember,
-                               bool Deterministic) {
-  Expected<llvm::MemoryBufferRef> BufOrErr = OldMember.getMemoryBufferRef();
-  if (!BufOrErr)
-    return BufOrErr.takeError();
-
-  NewArchiveMember M;
-  M.Buf = MemoryBuffer::getMemBuffer(*BufOrErr, false);
-  M.MemberName = M.Buf->getBufferIdentifier();
-  if (!Deterministic) {
-    auto ModTimeOrErr = OldMember.getLastModified();
-    if (!ModTimeOrErr)
-      return ModTimeOrErr.takeError();
-    M.ModTime = ModTimeOrErr.get();
-    Expected<unsigned> UIDOrErr = OldMember.getUID();
-    if (!UIDOrErr)
-      return UIDOrErr.takeError();
-    M.UID = UIDOrErr.get();
-    Expected<unsigned> GIDOrErr = OldMember.getGID();
-    if (!GIDOrErr)
-      return GIDOrErr.takeError();
-    M.GID = GIDOrErr.get();
-    Expected<sys::fs::perms> AccessModeOrErr = OldMember.getAccessMode();
-    if (!AccessModeOrErr)
-      return AccessModeOrErr.takeError();
-    M.Perms = AccessModeOrErr.get();
-  }
-  return std::move(M);
-}
-*/
-
-/*
-Expected<NewArchiveMember> NewArchiveMember::getFile(StringRef FileName,
-                                                     bool Deterministic) {
-  sys::fs::file_status Status;
-  auto FDOrErr = sys::fs::openNativeFileForRead(FileName);
-  if (!FDOrErr)
-    return FDOrErr.takeError();
-  sys::fs::file_t FD = *FDOrErr;
-  assert(FD != sys::fs::kInvalidFile);
-
-  if (auto EC = sys::fs::status(FD, Status))
-    return errorCodeToError(EC);
-
-  // Opening a directory doesn't make sense. Let it fail.
-  // Linux cannot open directories with open(2), although
-  // cygwin and *bsd can.
-  if (Status.type() == sys::fs::file_type::directory_file)
-    return errorCodeToError(make_error_code(errc::is_a_directory));
-
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
-      MemoryBuffer::getOpenFile(FD, FileName, Status.getSize(), false);
-  if (!MemberBufferOrErr)
-    return errorCodeToError(MemberBufferOrErr.getError());
-
-  if (auto EC = sys::fs::closeFile(FD))
-    return errorCodeToError(EC);
-
-  NewArchiveMember M;
-  M.Buf = std::move(*MemberBufferOrErr);
-  M.MemberName = M.Buf->getBufferIdentifier();
-  if (!Deterministic) {
-    M.ModTime = std::chrono::time_point_cast<std::chrono::seconds>(
-        Status.getLastModificationTime());
-    M.UID = Status.getUser();
-    M.GID = Status.getGroup();
-    M.Perms = Status.permissions();
-  }
-  return std::move(M);
-}
-*/
 
 fn is_darwin(kind: ArchiveKind) -> bool {
     matches!(kind, ArchiveKind::Darwin | ArchiveKind::Darwin64)
