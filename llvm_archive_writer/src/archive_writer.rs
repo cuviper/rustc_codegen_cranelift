@@ -161,7 +161,7 @@ fn compute_string_table(names: &[u8]) -> MemberData<'_> {
 
 fn now(deterministic: bool) -> u64 {
     if !deterministic {
-        todo!(); // FIXME
+        todo!("non deterministic mode is not yet supported"); // FIXME
     }
     0
 }
