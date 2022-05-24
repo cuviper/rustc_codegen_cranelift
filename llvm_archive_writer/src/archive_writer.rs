@@ -284,29 +284,37 @@ fn write_symbol_table<W: Write + Seek>(
     write!(w, "{nil:\0<pad$}", nil = "", pad = usize::try_from(pad).unwrap())
 }
 
-fn get_symbols(
-    buf: &[u8],
-    sym_names: &mut Cursor<Vec<u8>>,
-    has_object: &mut bool,
-) -> io::Result<Vec<u64>> {
+fn get_symbols(buf: &[u8], f: &mut dyn FnMut(&[u8]) -> io::Result<()>) -> io::Result<bool> {
     // FIXME match what LLVM does
 
     match object::File::parse(buf) {
         Ok(file) => {
-            *has_object = true;
-            let mut ret = vec![];
             for sym in file.symbols() {
                 if !is_archive_symbol(&sym) {
                     continue;
                 }
-                ret.push(sym_names.stream_position()?);
-                sym_names.write_all(sym.name_bytes().expect("FIXME"))?;
-                sym_names.write_all(&[0])?;
+                f(sym.name_bytes().expect("FIXME"))?;
             }
-            Ok(ret)
+            Ok(true)
         }
-        Err(_) => Ok(vec![]),
+        Err(_) => Ok(false),
     }
+}
+
+// NOTE: LLVM calls this getSymbols and has the get_symbols function inlined
+fn write_symbols(
+    buf: &[u8],
+    sym_names: &mut Cursor<Vec<u8>>,
+    has_object: &mut bool,
+) -> io::Result<Vec<u64>> {
+    let mut ret = vec![];
+    *has_object = get_symbols(buf, &mut |sym| {
+        ret.push(sym_names.stream_position()?);
+        sym_names.write_all(sym)?;
+        sym_names.write_all(&[0])?;
+        Ok(())
+    })?;
+    Ok(ret)
 }
 
 fn compute_member_data<'a, S: Write + Seek>(
@@ -433,7 +441,7 @@ fn compute_member_data<'a, S: Write + Seek>(
         )?;
 
         let symbols =
-            if need_symbols { get_symbols(data, sym_names, &mut has_object)? } else { vec![] };
+            if need_symbols { write_symbols(data, sym_names, &mut has_object)? } else { vec![] };
 
         pos += u64::try_from(header.len() + data.len() + padding.len()).unwrap();
         ret.push(MemberData { symbols, header, data, padding })
