@@ -16,7 +16,8 @@ use crate::alignment::*;
 use crate::archive::*;
 
 pub struct NewArchiveMember {
-    pub buf: Vec<u8>,
+    pub buf: Box<dyn AsRef<[u8]>>,
+    pub get_symbols: fn(buf: &[u8], f: &mut dyn FnMut(&[u8]) -> io::Result<()>) -> io::Result<bool>,
     pub member_name: String,
     pub mtime: u64,
     pub uid: u32,
@@ -284,7 +285,10 @@ fn write_symbol_table<W: Write + Seek>(
     write!(w, "{nil:\0<pad$}", nil = "", pad = usize::try_from(pad).unwrap())
 }
 
-fn get_symbols(buf: &[u8], f: &mut dyn FnMut(&[u8]) -> io::Result<()>) -> io::Result<bool> {
+pub fn get_native_object_symbols(
+    buf: &[u8],
+    f: &mut dyn FnMut(&[u8]) -> io::Result<()>,
+) -> io::Result<bool> {
     // FIXME match what LLVM does
 
     match object::File::parse(buf) {
@@ -301,9 +305,10 @@ fn get_symbols(buf: &[u8], f: &mut dyn FnMut(&[u8]) -> io::Result<()>) -> io::Re
     }
 }
 
-// NOTE: LLVM calls this getSymbols and has the get_symbols function inlined
+// NOTE: LLVM calls this getSymbols and has the get_native_symbols function inlined
 fn write_symbols(
     buf: &[u8],
+    get_symbols: fn(buf: &[u8], f: &mut dyn FnMut(&[u8]) -> io::Result<()>) -> io::Result<bool>,
     sym_names: &mut Cursor<Vec<u8>>,
     has_object: &mut bool,
 ) -> io::Result<Vec<u64>> {
@@ -397,7 +402,7 @@ fn compute_member_data<'a, S: Write + Seek>(
     for m in new_members {
         let mut header = Vec::new();
 
-        let data = if thin { &[][..] } else { &m.buf };
+        let data: &[u8] = if thin { &[][..] } else { (*m.buf).as_ref() };
 
         // ld64 expects the members to be 8-byte aligned for 64-bit content and at
         // least 4-byte aligned for 32-bit content.  Opt for the larger encoding
@@ -440,8 +445,11 @@ fn compute_member_data<'a, S: Write + Seek>(
             size,
         )?;
 
-        let symbols =
-            if need_symbols { write_symbols(data, sym_names, &mut has_object)? } else { vec![] };
+        let symbols = if need_symbols {
+            write_symbols(data, m.get_symbols, sym_names, &mut has_object)?
+        } else {
+            vec![]
+        };
 
         pos += u64::try_from(header.len() + data.len() + padding.len()).unwrap();
         ret.push(MemberData { symbols, header, data, padding })
