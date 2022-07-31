@@ -220,19 +220,8 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
         runner.in_dir(["rand"], |runner| {
             runner.run_cargo(["clean"]);
 
-            if runner.host_triple == runner.target_triple {
-                eprintln!("[TEST] rust-random/rand");
-                runner.run_cargo(["test", "--workspace"]);
-            } else {
-                eprintln!("[AOT] rust-random/rand");
-                runner.run_cargo([
-                    "build",
-                    "--workspace",
-                    "--target",
-                    &runner.target_triple,
-                    "--tests",
-                ]);
-            }
+            eprintln!("[TEST] rust-random/rand");
+            runner.run_cargo(["test", "--workspace", "--target", &runner.target_triple]);
         });
     }),
     TestCase::new("bench.simple-raytracer", &|runner| {
@@ -269,6 +258,8 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
                 bench_run.arg(PathBuf::from("./raytracer_cg_clif"));
                 spawn_and_wait(bench_run);
             } else {
+                // Skip benchmarking when cross-compiling as qemu is slow and any emulation would
+                // invalidate the benchmark results.
                 runner.run_cargo(["clean"]);
                 eprintln!("[BENCH COMPILE] ebobby/simple-raytracer (skipped)");
                 eprintln!("[COMPILE] ebobby/simple-raytracer");
@@ -280,13 +271,7 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
     TestCase::new("test.libcore", &|runner| {
         runner.in_dir(["build_sysroot", "sysroot_src", "library", "core", "tests"], |runner| {
             runner.run_cargo(["clean"]);
-
-            if runner.host_triple == runner.target_triple {
-                runner.run_cargo(["test"]);
-            } else {
-                eprintln!("Cross-Compiling: Not running tests");
-                runner.run_cargo(["build", "--target", &runner.target_triple, "--tests"]);
-            }
+            runner.run_cargo(["test", "--target", &runner.target_triple]);
         });
     }),
     TestCase::new("test.regex-shootout-regex-dna", &|runner| {
@@ -306,49 +291,46 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
             build_cmd.env("RUSTFLAGS", lint_rust_flags.clone());
             spawn_and_wait(build_cmd);
 
-            if runner.host_triple == runner.target_triple {
-                let mut run_cmd = runner.cargo_command([
-                    "run",
-                    "--example",
-                    "shootout-regex-dna",
-                    "--target",
-                    &runner.target_triple,
-                ]);
-                run_cmd.env("RUSTFLAGS", lint_rust_flags);
+            let mut run_cmd = runner.cargo_command([
+                "run",
+                "--example",
+                "shootout-regex-dna",
+                "--target",
+                &runner.target_triple,
+            ]);
+            run_cmd.env("RUSTFLAGS", lint_rust_flags);
 
-                let input =
-                    fs::read_to_string(PathBuf::from("examples/regexdna-input.txt")).unwrap();
-                let expected_path = PathBuf::from("examples/regexdna-output.txt");
-                let expected = fs::read_to_string(&expected_path).unwrap();
+            let input = fs::read_to_string(PathBuf::from("examples/regexdna-input.txt")).unwrap();
+            let expected_path = PathBuf::from("examples/regexdna-output.txt");
+            let expected = fs::read_to_string(&expected_path).unwrap();
 
-                let output = spawn_and_wait_with_input(run_cmd, input);
-                // Make sure `[codegen mono items] start` doesn't poison the diff
-                let output = output
-                    .lines()
-                    .filter(|line| !line.contains("codegen mono items"))
-                    .chain(Some("")) // This just adds the trailing newline
-                    .collect::<Vec<&str>>()
-                    .join("\r\n");
+            let output = spawn_and_wait_with_input(run_cmd, input);
+            // Make sure `[codegen mono items] start` doesn't poison the diff
+            let output = output
+                .lines()
+                .filter(|line| !line.contains("codegen mono items"))
+                .chain(Some("")) // This just adds the trailing newline
+                .collect::<Vec<&str>>()
+                .join("\r\n");
 
-                let output_matches = expected.lines().eq(output.lines());
-                if !output_matches {
-                    let res_path = PathBuf::from("res.txt");
-                    fs::write(&res_path, &output).unwrap();
+            let output_matches = expected.lines().eq(output.lines());
+            if !output_matches {
+                let res_path = PathBuf::from("res.txt");
+                fs::write(&res_path, &output).unwrap();
 
-                    if cfg!(windows) {
-                        println!("Output files don't match!");
-                        println!("Expected Output:\n{}", expected);
-                        println!("Actual Output:\n{}", output);
-                    } else {
-                        let mut diff = Command::new("diff");
-                        diff.arg("-u");
-                        diff.arg(res_path);
-                        diff.arg(expected_path);
-                        spawn_and_wait(diff);
-                    }
-
-                    std::process::exit(1);
+                if cfg!(windows) {
+                    println!("Output files don't match!");
+                    println!("Expected Output:\n{}", expected);
+                    println!("Actual Output:\n{}", output);
+                } else {
+                    let mut diff = Command::new("diff");
+                    diff.arg("-u");
+                    diff.arg(res_path);
+                    diff.arg(expected_path);
+                    spawn_and_wait(diff);
                 }
+
+                std::process::exit(1);
             }
         });
     }),
@@ -359,26 +341,20 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
             // newer aho_corasick versions throw a deprecation warning
             let lint_rust_flags = format!("{} --cap-lints warn", runner.rust_flags);
 
-            if runner.host_triple == runner.target_triple {
-                let mut run_cmd = runner.cargo_command([
-                    "test",
-                    "--tests",
-                    "--",
-                    "--exclude-should-panic",
-                    "--test-threads",
-                    "1",
-                    "-Zunstable-options",
-                    "-q",
-                ]);
-                run_cmd.env("RUSTFLAGS", lint_rust_flags);
-                spawn_and_wait(run_cmd);
-            } else {
-                eprintln!("Cross-Compiling: Not running tests");
-                let mut build_cmd =
-                    runner.cargo_command(["build", "--tests", "--target", &runner.target_triple]);
-                build_cmd.env("RUSTFLAGS", lint_rust_flags.clone());
-                spawn_and_wait(build_cmd);
-            }
+            let mut run_cmd = runner.cargo_command([
+                "test",
+                "--tests",
+                "--target",
+                &runner.target_triple,
+                "--",
+                "--exclude-should-panic",
+                "--test-threads",
+                "1",
+                "-Zunstable-options",
+                "-q",
+            ]);
+            run_cmd.env("RUSTFLAGS", lint_rust_flags);
+            spawn_and_wait(run_cmd);
         });
     }),
     TestCase::new("test.portable-simd", &|runner| {
@@ -386,9 +362,7 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
             runner.run_cargo(["clean"]);
             runner.run_cargo(["build", "--all-targets", "--target", &runner.target_triple]);
 
-            if runner.host_triple == runner.target_triple {
-                runner.run_cargo(["test", "-q"]);
-            }
+            runner.run_cargo(["test", "-q", "--target", &runner.target_triple]);
         });
     }),
 ];
@@ -474,7 +448,7 @@ impl TestRunner {
             match target_triple.as_str() {
                 "aarch64-unknown-linux-gnu" => {
                     // We are cross-compiling for aarch64. Use the correct linker and run tests in qemu.
-                    rust_flags = format!("-Clinker=aarch64-linux-gnu-gcc{}", rust_flags);
+                    rust_flags = format!("-Clinker=aarch64-linux-gnu-gcc {}", rust_flags);
                     run_wrapper = vec!["qemu-aarch64", "-L", "/usr/aarch64-linux-gnu"];
                 }
                 "x86_64-pc-windows-gnu" => {
@@ -606,6 +580,12 @@ impl TestRunner {
         let mut cmd = Command::new(cargo_clif);
         cmd.args(args);
         cmd.env("RUSTFLAGS", &self.rust_flags);
+        if !self.run_wrapper.is_empty() {
+            cmd.env(
+                format!("CARGO_TARGET_{}_RUNNER", self.target_triple.to_uppercase().replace('-', "_")),
+                self.run_wrapper.join(" "),
+            );
+        };
         cmd
     }
 
