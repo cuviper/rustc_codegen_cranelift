@@ -582,8 +582,25 @@ impl TestRunner {
         cmd.env("RUSTFLAGS", &self.rust_flags);
         if !self.run_wrapper.is_empty() {
             cmd.env(
-                format!("CARGO_TARGET_{}_RUNNER", self.target_triple.to_uppercase().replace('-', "_")),
+                format!(
+                    "CARGO_TARGET_{}_RUNNER",
+                    self.target_triple.to_uppercase().replace('-', "_")
+                ),
                 self.run_wrapper.join(" "),
+            );
+
+            let mut cmd_iter = self.run_wrapper.iter();
+            let first = cmd_iter.next().unwrap();
+
+            cmd.env(
+                "RUSTDOCFLAGS",
+                format!(
+                    "--runtool {first}{}",
+                    cmd_iter
+                        .map(|arg| format!(" --runtool-arg {arg}"))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                ),
             );
         };
         cmd
