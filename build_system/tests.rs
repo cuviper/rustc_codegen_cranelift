@@ -449,7 +449,7 @@ impl TestRunner {
                 "aarch64-unknown-linux-gnu" => {
                     // We are cross-compiling for aarch64. Use the correct linker and run tests in qemu.
                     rust_flags = format!("-Clinker=aarch64-linux-gnu-gcc {}", rust_flags);
-                    run_wrapper = vec!["qemu-aarch64", "-L", "/usr/aarch64-linux-gnu"];
+                    run_wrapper = vec!["qemu-aarch64-static", "-L", "/usr/aarch64-linux-gnu"];
                 }
                 "x86_64-pc-windows-gnu" => {
                     // We are cross-compiling for Windows. Run tests in wine.
