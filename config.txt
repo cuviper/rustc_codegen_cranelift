@@ -8,7 +8,7 @@
 # Which triple to build libraries (core/alloc/std/test/proc_macro) for.
 #
 # Defaults to `host`.
-#target = x86_64-unknown-linux-gnu
+target = riscv64gc-unknown-linux-gnu
 
 # Disables cleaning of the sysroot dir. This will cause old compiled artifacts to be re-used when
 # the sysroot source hasn't changed. This is useful when the codegen backend hasn't been modified.

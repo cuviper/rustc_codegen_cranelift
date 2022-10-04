@@ -124,6 +124,8 @@ pub(crate) fn build_sysroot(
                 // When cross-compiling it is often necessary to manually pick the right linker
                 let linker = if target_triple == "aarch64-unknown-linux-gnu" {
                     Some("aarch64-linux-gnu-gcc")
+                } else if target_triple == "riscv64gc-unknown-linux-gnu" {
+                    Some("riscv64-linux-gnu-gcc")
                 } else {
                     None
                 };
@@ -193,6 +195,7 @@ fn build_clif_sysroot_for_triple(
         build_cmd.arg("--release");
         rustflags.push_str(" -Zmir-opt-level=3");
     }
+    build_cmd.arg("-j1");
     if let Some(linker) = linker {
         use std::fmt::Write;
         write!(rustflags, " -Clinker={}", linker).unwrap();
