@@ -34,7 +34,7 @@ cranelift-jit = { path = "../wasmtime/cranelift/jit" }
 cranelift-object = { path = "../wasmtime/cranelift/object" }
 
 #gimli = { path = "../" }
-object = { path = "/home/bjorn/Documenten/object" }
+object = { path = "./object" }
 
 [features]
 # Enable features not ready to be enabled when compiling as part of rustc
