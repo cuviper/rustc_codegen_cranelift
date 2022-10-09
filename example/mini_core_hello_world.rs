@@ -319,6 +319,9 @@ fn main() {
 
     from_decimal_string();
 
+    #[cfg(not(any(jit, windows)))]
+    test_tls();
+
     #[cfg(all(not(jit), target_arch = "x86_64", any(target_os = "linux", target_os = "darwin")))]
     unsafe {
         global_asm_test();
@@ -366,6 +369,149 @@ global_asm! {
     "
 }
 
+#[repr(C)]
+enum c_void {
+    _1,
+    _2,
+}
+
+type c_int = i32;
+type c_ulong = u64;
+
+type pthread_t = c_ulong;
+
+#[repr(C)]
+struct pthread_attr_t {
+    __size: [u64; 7],
+}
+
+#[link(name = "pthread")]
+#[cfg(unix)]
+extern "C" {
+    fn pthread_attr_init(attr: *mut pthread_attr_t) -> c_int;
+
+    fn pthread_create(
+        native: *mut pthread_t,
+        attr: *const pthread_attr_t,
+        f: extern "C" fn(_: *mut c_void) -> *mut c_void,
+        value: *mut c_void
+    ) -> c_int;
+
+    fn pthread_join(
+        native: pthread_t,
+        value: *mut *mut c_void
+    ) -> c_int;
+}
+
+type DWORD = u32;
+type LPDWORD = *mut u32;
+
+type LPVOID = *mut c_void;
+type HANDLE = *mut c_void;
+
+#[link(name = "msvcrt")]
+#[cfg(windows)]
+extern "C" {
+    fn WaitForSingleObject(
+        hHandle: LPVOID,
+        dwMilliseconds: DWORD
+    ) -> DWORD;
+
+    fn CreateThread(
+        lpThreadAttributes: LPVOID, // Technically LPSECURITY_ATTRIBUTES, but we don't use it anyway
+        dwStackSize: usize,
+        lpStartAddress: extern "C" fn(_: *mut c_void) -> *mut c_void,
+        lpParameter: LPVOID,
+        dwCreationFlags: DWORD,
+        lpThreadId: LPDWORD
+    ) -> HANDLE;
+}
+
+struct Thread {
+    #[cfg(windows)]
+    handle: HANDLE,
+    #[cfg(unix)]
+    handle: pthread_t,
+}
+
+impl Thread {
+    unsafe fn create(f: extern "C" fn(_: *mut c_void) -> *mut c_void) -> Self {
+        #[cfg(unix)]
+        {
+            let mut attr: pthread_attr_t = zeroed();
+            let mut thread: pthread_t = 0;
+
+            if pthread_attr_init(&mut attr) != 0 {
+                assert!(false);
+            }
+
+            if pthread_create(&mut thread, &attr, f, 0 as *mut c_void) != 0 {
+                assert!(false);
+            }
+
+            Thread {
+                handle: thread,
+            }
+        }
+
+        #[cfg(windows)]
+        {
+            let handle = CreateThread(0 as *mut c_void, 0, f, 0 as *mut c_void, 0, 0 as *mut u32);
+
+            if (handle as u64) == 0 {
+                assert!(false);
+            }
+
+            Thread {
+                handle,
+            }
+        }
+    }
+
+
+    unsafe fn join(self) {
+        #[cfg(unix)]
+        {
+            let mut res = 0 as *mut c_void;
+            pthread_join(self.handle, &mut res);
+        }
+
+        #[cfg(windows)]
+        {
+            // The INFINITE macro is used to signal operations that do not timeout.
+            let infinite = 0xffffffff;
+            assert!(WaitForSingleObject(self.handle, infinite) == 0);
+        }
+    }
+}
+
+
+
+
+#[thread_local]
+#[cfg(not(jit))]
+static mut TLS: u8 = 42;
+
+#[cfg(not(jit))]
+extern "C" fn mutate_tls(_: *mut c_void) -> *mut c_void {
+    unsafe { TLS = 0; }
+    0 as *mut c_void
+}
+
+#[cfg(not(jit))]
+fn test_tls() {
+    unsafe {
+        assert_eq!(TLS, 42);
+
+        let thread = Thread::create(mutate_tls);
+        thread.join();
+
+        // TLS of main thread must not have been changed by the other thread.
+        assert_eq!(TLS, 42);
+
+        puts("TLS works!\n\0" as *const str as *const i8);
+    }
+}
 
 // Copied ui/issues/issue-61696.rs
 

@@ -62,14 +62,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "cranelift-bforest"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "cranelift-entity",
 ]
 
 [[package]]
 name = "cranelift-codegen"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "arrayvec",
  "bumpalo",
@@ -87,22 +87,22 @@ dependencies = [
 
 [[package]]
 name = "cranelift-codegen-meta"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "cranelift-codegen-shared",
 ]
 
 [[package]]
 name = "cranelift-codegen-shared"
-version = "0.89.0"
+version = "0.90.0"
 
 [[package]]
 name = "cranelift-entity"
-version = "0.89.0"
+version = "0.90.0"
 
 [[package]]
 name = "cranelift-frontend"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "cranelift-codegen",
  "log",
@@ -112,14 +112,14 @@ dependencies = [
 
 [[package]]
 name = "cranelift-isle"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "rayon",
 ]
 
 [[package]]
 name = "cranelift-jit"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "anyhow",
  "cranelift-codegen",
@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "cranelift-module"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "anyhow",
  "cranelift-codegen",
@@ -143,7 +143,7 @@ dependencies = [
 
 [[package]]
 name = "cranelift-native"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "cranelift-codegen",
  "libc",
@@ -152,7 +152,7 @@ dependencies = [
 
 [[package]]
 name = "cranelift-object"
-version = "0.89.0"
+version = "0.90.0"
 dependencies = [
  "anyhow",
  "cranelift-codegen",

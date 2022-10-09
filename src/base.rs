@@ -161,7 +161,7 @@ pub(crate) fn compile_fn(
     // invalidate it when it would change.
     context.domtree.clear();
 
-    //#[cfg(any())] // This is never true
+    #[cfg(any())] // This is never true
     let _clif_guard = {
         use std::fmt::Write;
 

@@ -237,13 +237,17 @@ impl CodegenBackend for CraneliftCodegenBackend {
     }
 }
 
-fn build_isa(sess: &Session, backend_config: &BackendConfig) -> Box<dyn isa::TargetIsa + 'static> {
-    use target_lexicon::{BinaryFormat, Triple};
-
-    let target_triple: Triple = match sess.target.llvm_target.parse() {
+fn target_triple(sess: &Session) -> target_lexicon::Triple {
+    match sess.target.llvm_target.parse() {
         Ok(triple) => triple,
         Err(err) => sess.fatal(&format!("target not recognized: {}", err)),
-    };
+    }
+}
+
+fn build_isa(sess: &Session, backend_config: &BackendConfig) -> Box<dyn isa::TargetIsa + 'static> {
+    use target_lexicon::BinaryFormat;
+
+    let target_triple = crate::target_triple(sess);
 
     let mut flags_builder = settings::builder();
     flags_builder.enable("is_pic").unwrap();
