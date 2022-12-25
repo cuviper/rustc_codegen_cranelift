@@ -70,6 +70,10 @@ fn prepare_sysroot(dirs: &Dirs) {
     init_git_repo(&sysroot_src.to_path(dirs));
 
     apply_patches(dirs, "sysroot", &sysroot_src.to_path(dirs));
+
+    let mut fetch_cmd = Command::new("cargo");
+    fetch_cmd.arg("fetch").current_dir(sysroot_src.to_path(dirs).join("library").join("core").join("tests"));
+    spawn_and_wait(fetch_cmd);
 }
 
 pub(crate) struct GitRepo {

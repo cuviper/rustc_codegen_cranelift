@@ -76,7 +76,7 @@ pub fn main() {
         .unwrap()
         .add_rules(landlock::path_beneath_rules(&["/"], access_read))
         .unwrap()
-        .add_rules(landlock::path_beneath_rules(&["/tmp"], access_all))
+        .add_rules(landlock::path_beneath_rules(&["/tmp", "/dev/null"], access_all))
         .unwrap()
         .add_rules(landlock::path_beneath_rules(
             &[
