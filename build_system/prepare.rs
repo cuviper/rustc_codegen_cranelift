@@ -9,10 +9,13 @@ use super::rustc_info::{get_file_name, get_rustc_path, get_rustc_version};
 use super::utils::{copy_dir_recursively, spawn_and_wait, Compiler};
 
 pub(crate) fn prepare(dirs: &Dirs) {
-    if RelPath::DOWNLOAD.to_path(dirs).exists() {
-        std::fs::remove_dir_all(RelPath::DOWNLOAD.to_path(dirs)).unwrap();
-    }
-    std::fs::create_dir_all(RelPath::DOWNLOAD.to_path(dirs)).unwrap();
+    RelPath::DOWNLOAD.ensure_fresh(dirs);
+
+    let mut fetch_cmd = Command::new("cargo");
+    fetch_cmd
+        .arg("fetch")
+        .current_dir(&dirs.source_dir);
+    spawn_and_wait(fetch_cmd);
 
     prepare_sysroot(dirs);
 
@@ -72,7 +75,16 @@ fn prepare_sysroot(dirs: &Dirs) {
     apply_patches(dirs, "sysroot", &sysroot_src.to_path(dirs));
 
     let mut fetch_cmd = Command::new("cargo");
-    fetch_cmd.arg("fetch").current_dir(sysroot_src.to_path(dirs).join("library").join("core").join("tests"));
+    fetch_cmd
+        .arg("fetch")
+        .current_dir(sysroot_src.to_path(dirs));
+    spawn_and_wait(fetch_cmd);
+
+
+    let mut fetch_cmd = Command::new("cargo");
+    fetch_cmd
+        .arg("fetch")
+        .current_dir(sysroot_src.to_path(dirs).join("library").join("core").join("tests"));
     spawn_and_wait(fetch_cmd);
 }
 

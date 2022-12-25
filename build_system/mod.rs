@@ -8,6 +8,7 @@ mod abi_cafe;
 mod build_backend;
 mod build_sysroot;
 mod config;
+mod landlock;
 mod path;
 mod prepare;
 mod rustc_info;
@@ -64,33 +65,6 @@ pub(crate) enum SysrootKind {
 }
 
 pub fn main() {
-    use landlock::{Access, Compatible, RulesetAttr, RulesetCreatedAttr};
-    let abi = landlock::ABI::V2;
-    let access_all = landlock::AccessFs::from_all(abi);
-    let access_read = landlock::AccessFs::from_read(abi);
-    landlock::Ruleset::new()
-        .set_best_effort(false)
-        .handle_access(access_all)
-        .unwrap()
-        .create()
-        .unwrap()
-        .add_rules(landlock::path_beneath_rules(&["/"], access_read))
-        .unwrap()
-        .add_rules(landlock::path_beneath_rules(&["/tmp", "/dev/null"], access_all))
-        .unwrap()
-        .add_rules(landlock::path_beneath_rules(
-            &[
-                std::env::current_dir().unwrap().join("build"),
-                std::env::current_dir().unwrap().join("dist"),
-            ],
-            access_all,
-        ))
-        .unwrap()
-        .add_rules(landlock::path_beneath_rules(&["/home/bjorn/.cargo/registry"], access_all))
-        .unwrap()
-        .restrict_self()
-        .unwrap();
-
     if env::var("RUST_BACKTRACE").is_err() {
         env::set_var("RUST_BACKTRACE", "1");
     }
@@ -175,6 +149,7 @@ pub fn main() {
     };
 
     path::RelPath::BUILD.ensure_exists(&dirs);
+    path::RelPath::DIST.ensure_exists(&dirs);
 
     {
         // Make sure we always explicitly specify the target dir
@@ -186,9 +161,15 @@ pub fn main() {
     }
 
     if command == Command::Prepare {
+        path::RelPath::DOWNLOAD.ensure_exists(&dirs);
+
+        landlock::lock_fetch();
+
         prepare::prepare(&dirs);
         process::exit(0);
     }
+
+    landlock::lock_build();
 
     let cg_clif_dylib =
         build_backend::build_backend(&dirs, channel, &host_triple, use_unstable_features);
