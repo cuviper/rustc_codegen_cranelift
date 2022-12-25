@@ -74,24 +74,19 @@ pub fn main() {
         .unwrap()
         .create()
         .unwrap()
-        .add_rule(landlock::PathBeneath::new(landlock::PathFd::new("/").unwrap(), access_read))
+        .add_rules(landlock::path_beneath_rules(&["/"], access_read))
         .unwrap()
-        .add_rule(landlock::PathBeneath::new(
-            landlock::PathFd::new(std::env::current_dir().unwrap().join("build")).unwrap(),
+        .add_rules(landlock::path_beneath_rules(&["/tmp"], access_all))
+        .unwrap()
+        .add_rules(landlock::path_beneath_rules(
+            &[
+                std::env::current_dir().unwrap().join("build"),
+                std::env::current_dir().unwrap().join("dist"),
+            ],
             access_all,
         ))
         .unwrap()
-        .add_rule(landlock::PathBeneath::new(
-            landlock::PathFd::new(std::env::current_dir().unwrap().join("dist")).unwrap(),
-            access_all,
-        ))
-        .unwrap()
-        .add_rule(landlock::PathBeneath::new(
-            landlock::PathFd::new("/home/bjorn/.cargo/registry").unwrap(),
-            access_all,
-        ))
-        .unwrap()
-        .add_rule(landlock::PathBeneath::new(landlock::PathFd::new("/tmp").unwrap(), access_all))
+        .add_rules(landlock::path_beneath_rules(&["/home/bjorn/.cargo/registry"], access_all))
         .unwrap()
         .restrict_self()
         .unwrap();
