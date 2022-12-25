@@ -63,7 +63,15 @@ impl RelPath {
     pub(crate) fn ensure_fresh(&self, dirs: &Dirs) {
         let path = self.to_path(dirs);
         if path.exists() {
-            fs::remove_dir_all(&path).unwrap();
+            for entry in fs::read_dir(&path).unwrap() {
+                let entry = entry.unwrap();
+                if entry.file_type().unwrap().is_dir() {
+                    fs::remove_dir_all(entry.path()).unwrap();
+                } else {
+                    fs::remove_file(entry.path()).unwrap();
+                }
+            }
+            //fs::remove_dir_all(&path).unwrap();
         }
         fs::create_dir_all(path).unwrap();
     }

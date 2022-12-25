@@ -64,6 +64,38 @@ pub(crate) enum SysrootKind {
 }
 
 pub fn main() {
+    use landlock::{Access, Compatible, RulesetAttr, RulesetCreatedAttr};
+    let abi = landlock::ABI::V2;
+    let access_all = landlock::AccessFs::from_all(abi);
+    let access_read = landlock::AccessFs::from_read(abi);
+    landlock::Ruleset::new()
+        .set_best_effort(false)
+        .handle_access(access_all)
+        .unwrap()
+        .create()
+        .unwrap()
+        .add_rule(landlock::PathBeneath::new(landlock::PathFd::new("/").unwrap(), access_read))
+        .unwrap()
+        .add_rule(landlock::PathBeneath::new(
+            landlock::PathFd::new(std::env::current_dir().unwrap().join("build")).unwrap(),
+            access_all,
+        ))
+        .unwrap()
+        .add_rule(landlock::PathBeneath::new(
+            landlock::PathFd::new(std::env::current_dir().unwrap().join("dist")).unwrap(),
+            access_all,
+        ))
+        .unwrap()
+        .add_rule(landlock::PathBeneath::new(
+            landlock::PathFd::new("/home/bjorn/.cargo/registry").unwrap(),
+            access_all,
+        ))
+        .unwrap()
+        .add_rule(landlock::PathBeneath::new(landlock::PathFd::new("/tmp").unwrap(), access_all))
+        .unwrap()
+        .restrict_self()
+        .unwrap();
+
     if env::var("RUST_BACKTRACE").is_err() {
         env::set_var("RUST_BACKTRACE", "1");
     }

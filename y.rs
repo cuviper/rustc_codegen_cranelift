@@ -3,7 +3,7 @@
 # This block is ignored by rustc
 set -e
 echo "[BUILD] y.rs" 1>&2
-rustc $0 -o ${0/.rs/.bin} -Cdebuginfo=1 --edition 2021
+rustc $0 -o ${0/.rs/.bin} -Cdebuginfo=1 --edition 2021 -L../rust-landlock/target/debug/deps --extern landlock=../rust-landlock/target/debug/liblandlock.rlib
 exec ${0/.rs/.bin} $@
 */
 

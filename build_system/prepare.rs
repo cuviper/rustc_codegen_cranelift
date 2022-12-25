@@ -164,6 +164,10 @@ fn clone_repo_shallow_github(dirs: &Dirs, download_dir: &Path, user: &str, repo:
 
     // Cleanup
     std::fs::remove_file(archive_file).unwrap();
+
+    let mut fetch_cmd = Command::new("cargo");
+    fetch_cmd.arg("fetch").current_dir(download_dir);
+    spawn_and_wait(fetch_cmd);
 }
 
 fn init_git_repo(repo_dir: &Path) {
