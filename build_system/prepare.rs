@@ -11,11 +11,7 @@ use super::utils::{copy_dir_recursively, spawn_and_wait, Compiler};
 pub(crate) fn prepare(dirs: &Dirs) {
     RelPath::DOWNLOAD.ensure_fresh(dirs);
 
-    let mut fetch_cmd = Command::new("cargo");
-    fetch_cmd
-        .arg("fetch")
-        .current_dir(&dirs.source_dir);
-    spawn_and_wait(fetch_cmd);
+    spawn_and_wait(super::build_backend::CG_CLIF.fetch("cargo", dirs));
 
     prepare_sysroot(dirs);
 
@@ -75,11 +71,8 @@ fn prepare_sysroot(dirs: &Dirs) {
     apply_patches(dirs, "sysroot", &sysroot_src.to_path(dirs));
 
     let mut fetch_cmd = Command::new("cargo");
-    fetch_cmd
-        .arg("fetch")
-        .current_dir(sysroot_src.to_path(dirs));
+    fetch_cmd.arg("fetch").current_dir(sysroot_src.to_path(dirs));
     spawn_and_wait(fetch_cmd);
-
 
     let mut fetch_cmd = Command::new("cargo");
     fetch_cmd

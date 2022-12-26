@@ -1,6 +1,6 @@
 use landlock::{
-    path_beneath_rules, Access, AccessFs, Compatible, PathFd, Ruleset, RulesetAttr, RulesetCreated,
-    RulesetCreatedAttr, RulesetError, ABI,
+    path_beneath_rules, Access, AccessFs, Compatible, Ruleset, RulesetAttr, RulesetCreated,
+    RulesetCreatedAttr, ABI,
 };
 
 /// Base landlock ruleset
