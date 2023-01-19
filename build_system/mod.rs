@@ -1,6 +1,8 @@
 use std::env;
 use std::path::PathBuf;
 use std::process;
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
 
 use self::utils::{is_ci, is_ci_opt, Compiler};
 
@@ -43,7 +45,21 @@ pub(crate) enum SysrootKind {
     Llvm,
 }
 
+static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
+static PREVIOUS_STEP: Mutex<Option<Instant>> = Mutex::new(None);
+
+fn time(step: &str) {
+    let now = Instant::now();
+    let mut previous_step = PREVIOUS_STEP.lock().unwrap();
+    let delta =
+        previous_step.map(|previous_step| now - previous_step).unwrap_or(Duration::from_secs(0));
+    *previous_step = Some(now);
+    println!("{step:<30} @ {:?} (+ {:?})", now - *STARTUP_TIME.get().unwrap(), delta);
+}
+
 pub fn main() {
+    STARTUP_TIME.set(Instant::now()).unwrap();
+
     if env::var("RUST_BACKTRACE").is_err() {
         env::set_var("RUST_BACKTRACE", "1");
     }
@@ -152,6 +168,8 @@ pub fn main() {
 
     env::set_var("RUSTC", "rustc_should_be_set_explicitly");
     env::set_var("RUSTDOC", "rustdoc_should_be_set_explicitly");
+
+    time("Inited");
 
     let cg_clif_dylib = build_backend::build_backend(
         &dirs,

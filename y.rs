@@ -6,6 +6,7 @@ echo "[BUILD] y.rs" 1>&2
 rustc $0 -o ${0/.rs/.bin} -Cdebuginfo=1 --edition 2021
 exec ${0/.rs/.bin} $@
 */
+#![feature(once_cell)]
 
 //! The build system for cg_clif
 //!

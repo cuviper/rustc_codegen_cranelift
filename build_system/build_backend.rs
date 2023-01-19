@@ -48,6 +48,8 @@ pub(crate) fn build_backend(
     eprintln!("[BUILD] rustc_codegen_cranelift");
     super::utils::spawn_and_wait(cmd);
 
+    super::time("Built backend");
+
     CG_CLIF
         .target_dir(dirs)
         .join(&bootstrap_host_compiler.triple)
