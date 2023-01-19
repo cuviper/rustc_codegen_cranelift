@@ -11,6 +11,7 @@ mod bench;
 mod build_backend;
 mod build_sysroot;
 mod config;
+mod hash;
 mod path;
 mod prepare;
 mod rustc_info;
