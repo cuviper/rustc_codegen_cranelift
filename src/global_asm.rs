@@ -112,6 +112,7 @@ pub(crate) fn compile_global_asm(
 
     // Assemble `global_asm`
     let global_asm_object_file = add_file_stem_postfix(output_object_file.clone(), ".asm");
+    // FIXME use llvm-as from the llvm-tools component instead
     let mut child = Command::new(&config.assembler)
         .arg("-o")
         .arg(&global_asm_object_file)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-./y.rs build --no-unstable-features
+./y.rs build
 
 echo "[SETUP] Rust fork"
 git clone https://github.com/rust-lang/rust.git || true

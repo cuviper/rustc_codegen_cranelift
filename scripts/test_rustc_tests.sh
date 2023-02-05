@@ -11,7 +11,7 @@ pushd rust
 command -v rg >/dev/null 2>&1 || cargo install ripgrep
 
 rm -r tests/ui/{extern/,unsized-locals/,lto/,linkage*} || true
-for test in $(rg --files-with-matches "lto|// needs-asm-support|// needs-unwind" tests/{codegen-units,ui,incremental}); do
+for test in $(rg --files-with-matches "lto|// needs-unwind" tests/{codegen-units,ui,incremental}); do
   rm $test
 done
 
@@ -51,6 +51,11 @@ rm tests/ui/abi/variadic-ffi.rs # requires callee side vararg support
 
 # unsized locals
 rm -r tests/run-pass-valgrind/unsized-locals
+
+# inline assembly features
+rm tests/ui/asm/may_unwind.rs
+rm tests/ui/asm/x86_64/issue-82869.rs
+rm tests/ui/asm/x86_64/issue-96797.rs # sym in global_asm!()
 
 # misc unimplemented things
 rm tests/ui/intrinsics/intrinsic-nearby.rs # unimplemented nearbyintf32 and nearbyintf64 intrinsics
@@ -119,7 +124,6 @@ rm tests/ui/dyn-star/dispatch-on-pin-mut.rs
 # bugs in the test suite
 # ======================
 rm tests/ui/backtrace.rs # TODO warning
-rm tests/ui/simple_global_asm.rs # TODO add needs-asm-support
 rm tests/ui/process/nofile-limit.rs # TODO some AArch64 linking issue
 
 rm tests/ui/stdio-is-blocking.rs # really slow with unoptimized libstd
