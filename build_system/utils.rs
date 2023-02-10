@@ -116,6 +116,7 @@ impl CargoProject {
     ) -> Command {
         let mut cmd = Command::new(cargo.as_ref());
 
+        // FIXME use --target
         cmd.env("RUSTC", rustc.as_ref())
             .arg("fetch")
             .arg("--manifest-path")
