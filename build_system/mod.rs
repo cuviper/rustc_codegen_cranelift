@@ -1,5 +1,5 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 use self::utils::{is_ci, is_ci_opt, Compiler};
@@ -105,7 +105,7 @@ pub fn main() {
         std::env::var("HOST_TRIPLE")
             .ok()
             .or_else(|| config::get_value("host"))
-            .unwrap_or_else(|| rustc_info::get_host_triple()),
+            .unwrap_or_else(|| rustc_info::get_host_triple(Path::new("rustc"))),
     );
     let target_triple = std::env::var("TARGET_TRIPLE")
         .ok()

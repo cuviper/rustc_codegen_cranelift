@@ -249,8 +249,8 @@ pub(crate) fn run_tests(
             target_triple.clone(),
         );
 
-        let runner =
-            TestRunner::new(dirs.clone(), target_compiler, get_host_triple() == target_triple);
+        let is_native = get_host_triple(&target_compiler.rustc) == target_triple;
+        let runner = TestRunner::new(dirs.clone(), target_compiler, is_native);
 
         BUILD_EXAMPLE_OUT_DIR.ensure_fresh(dirs);
         runner.run_testsuite(NO_SYSROOT_SUITE);
@@ -271,8 +271,8 @@ pub(crate) fn run_tests(
             target_triple.clone(),
         );
 
-        let runner =
-            TestRunner::new(dirs.clone(), target_compiler, get_host_triple() == target_triple);
+        let is_native = get_host_triple(&target_compiler.rustc) == target_triple;
+        let runner = TestRunner::new(dirs.clone(), target_compiler, is_native);
 
         if run_base_sysroot {
             runner.run_testsuite(BASE_SYSROOT_SUITE);

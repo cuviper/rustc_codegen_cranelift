@@ -49,16 +49,21 @@ fn benchmark_simple_raytracer(dirs: &Dirs, bootstrap_host_compiler: &Compiler) {
             .target_dir(dirs)
             .join(&bootstrap_host_compiler.triple)
             .join("debug")
-            .join(get_file_name("main", "bin")),
-        RelPath::BUILD.to_path(dirs).join(get_file_name("raytracer_cg_llvm", "bin")),
+            .join(get_file_name(&bootstrap_host_compiler.rustc, "main", "bin")),
+        RelPath::BUILD.to_path(dirs).join(get_file_name(
+            &bootstrap_host_compiler.rustc,
+            "raytracer_cg_llvm",
+            "bin",
+        )),
     )
     .unwrap();
 
     let bench_runs = env::var("BENCH_RUNS").unwrap_or_else(|_| "10".to_string()).parse().unwrap();
 
     eprintln!("[BENCH COMPILE] ebobby/simple-raytracer");
-    let cargo_clif =
-        RelPath::DIST.to_path(dirs).join(get_file_name("cargo_clif", "bin").replace('_', "-"));
+    let cargo_clif = RelPath::DIST
+        .to_path(dirs)
+        .join(get_file_name(&bootstrap_host_compiler.rustc, "cargo_clif", "bin").replace('_', "-"));
     let manifest_path = SIMPLE_RAYTRACER.manifest_path(dirs);
     let target_dir = SIMPLE_RAYTRACER.target_dir(dirs);
 
@@ -86,8 +91,12 @@ fn benchmark_simple_raytracer(dirs: &Dirs, bootstrap_host_compiler: &Compiler) {
 
     eprintln!("[BENCH RUN] ebobby/simple-raytracer");
     fs::copy(
-        target_dir.join("debug").join(get_file_name("main", "bin")),
-        RelPath::BUILD.to_path(dirs).join(get_file_name("raytracer_cg_clif", "bin")),
+        target_dir.join("debug").join(get_file_name(&bootstrap_host_compiler.rustc, "main", "bin")),
+        RelPath::BUILD.to_path(dirs).join(get_file_name(
+            &bootstrap_host_compiler.rustc,
+            "raytracer_cg_clif",
+            "bin",
+        )),
     )
     .unwrap();
 
@@ -95,8 +104,14 @@ fn benchmark_simple_raytracer(dirs: &Dirs, bootstrap_host_compiler: &Compiler) {
         0,
         bench_runs,
         None,
-        Path::new(".").join(get_file_name("raytracer_cg_llvm", "bin")).to_str().unwrap(),
-        Path::new(".").join(get_file_name("raytracer_cg_clif", "bin")).to_str().unwrap(),
+        Path::new(".")
+            .join(get_file_name(&bootstrap_host_compiler.rustc, "raytracer_cg_llvm", "bin"))
+            .to_str()
+            .unwrap(),
+        Path::new(".")
+            .join(get_file_name(&bootstrap_host_compiler.rustc, "raytracer_cg_clif", "bin"))
+            .to_str()
+            .unwrap(),
     );
     bench_run.current_dir(RelPath::BUILD.to_path(dirs));
     spawn_and_wait(bench_run);
