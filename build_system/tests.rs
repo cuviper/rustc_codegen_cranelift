@@ -3,7 +3,9 @@ use super::config;
 use super::path::{Dirs, RelPath};
 use super::prepare::{apply_patches, GitRepo};
 use super::rustc_info::get_default_sysroot;
-use super::utils::{spawn_and_wait, spawn_and_wait_with_input, CargoProject, Compiler};
+use super::utils::{
+    refresh_lockfile, spawn_and_wait, spawn_and_wait_with_input, CargoProject, Compiler,
+};
 use super::{CodegenBackend, SysrootKind};
 use std::env;
 use std::ffi::OsStr;
@@ -156,9 +158,18 @@ const EXTENDED_SYSROOT_SUITE: &[TestCase] = &[
             &LIBCORE_TESTS_SRC.to_path(&runner.dirs),
         );
 
-        let source_lockfile = RelPath::PATCHES.to_path(&runner.dirs).join("coretests-lock.toml");
-        let target_lockfile = LIBCORE_TESTS_SRC.to_path(&runner.dirs).join("Cargo.lock");
-        fs::copy(source_lockfile, target_lockfile).unwrap();
+        // Reuse the original lockfile of the standard library.
+        fs::copy(
+            runner.stdlib_source.join("Cargo.lock"),
+            LIBCORE_TESTS_SRC.to_path(&runner.dirs).join("Cargo.lock"),
+        )
+        .unwrap();
+        refresh_lockfile(
+            &runner.target_compiler.rustc,
+            &runner.target_compiler.cargo,
+            &runner.dirs,
+            &LIBCORE_TESTS_SRC.to_path(&runner.dirs).join("Cargo.toml"),
+        );
 
         LIBCORE_TESTS.clean(&runner.dirs);
 

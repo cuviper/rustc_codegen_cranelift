@@ -174,6 +174,22 @@ pub(crate) fn git_command<'a>(repo_dir: impl Into<Option<&'a Path>>, cmd: &str) 
     git_cmd
 }
 
+/// Force the lockfile to be updated while keeping all existing versions identical.
+pub(crate) fn refresh_lockfile(rustc: &Path, cargo: &Path, dirs: &Dirs, manifest_path: &Path) {
+    // `cargo generate-lockfile` discards all versions locked in the old `Cargo.lock` and as such is
+    // not suitable for this purpose. Instead `cargo check` with a bogus `--target-dir` is used to
+    // fail immediately after updating the lockfile.
+    Command::new(cargo)
+        .arg("prepare")
+        .arg("--manifest-path")
+        .arg(manifest_path)
+        .arg("--target-dir")
+        .arg(super::TARGET_DIR_SHOULD_BE_SET_EXPLICITLY.to_path(&dirs))
+        .env("RUSTC", rustc)
+        .output()
+        .unwrap();
+}
+
 #[track_caller]
 pub(crate) fn try_hard_link(src: impl AsRef<Path>, dst: impl AsRef<Path>) {
     let src = src.as_ref();

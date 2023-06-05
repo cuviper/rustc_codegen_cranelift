@@ -3,6 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::utils::refresh_lockfile;
+
 use super::build_sysroot::STDLIB_SRC;
 use super::path::{Dirs, RelPath};
 use super::rustc_info::get_default_sysroot;
@@ -17,7 +19,7 @@ pub(crate) fn prepare(dirs: &Dirs) {
     super::tests::PORTABLE_SIMD_REPO.fetch(dirs);
 }
 
-pub(crate) fn prepare_stdlib(dirs: &Dirs, rustc: &Path) {
+pub(crate) fn prepare_stdlib(dirs: &Dirs, rustc: &Path, cargo: &Path) {
     let sysroot_src_orig = get_default_sysroot(rustc).join("lib/rustlib/src/rust");
     assert!(sysroot_src_orig.exists());
 
@@ -27,7 +29,8 @@ pub(crate) fn prepare_stdlib(dirs: &Dirs, rustc: &Path) {
         STDLIB_SRC.to_path(dirs).join("Cargo.toml"),
         r#"
 [workspace]
-members = ["./library/sysroot"]
+members = ["./library/sysroot", "./library/std"]
+exclude = ["./library/stdarch"]
 
 [patch.crates-io]
 rustc-std-workspace-core = { path = "./library/rustc-std-workspace-core" }
@@ -48,9 +51,9 @@ codegen-units = 10000
     )
     .unwrap();
 
-    let source_lockfile = RelPath::PATCHES.to_path(dirs).join("stdlib-lock.toml");
-    let target_lockfile = STDLIB_SRC.to_path(dirs).join("Cargo.lock");
-    fs::copy(source_lockfile, target_lockfile).unwrap();
+    // The existing lockfile contains a lot of references to crates not part of the standard
+    // library. We need to remove those to ensure `--locked` doesn't reject the lockfile.
+    refresh_lockfile(rustc, cargo, dirs, &STDLIB_SRC.to_path(dirs).join("Cargo.toml"));
 }
 
 pub(crate) struct GitRepo {

@@ -284,7 +284,7 @@ fn build_clif_sysroot_for_triple(
 
 fn build_rtstartup(dirs: &Dirs, compiler: &Compiler) -> Option<SysrootTarget> {
     if !super::config::get_bool("keep_sysroot") {
-        super::prepare::prepare_stdlib(dirs, &compiler.rustc);
+        super::prepare::prepare_stdlib(dirs, &compiler.rustc, &compiler.cargo);
     }
 
     if !compiler.triple.ends_with("windows-gnu") {

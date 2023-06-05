@@ -6,6 +6,7 @@ use std::env;
 use std::path::PathBuf;
 use std::process;
 
+use self::path::RelPath;
 use self::utils::{is_ci, is_ci_opt, Compiler};
 
 mod abi_cafe;
@@ -52,6 +53,9 @@ enum CodegenBackend {
     Local(PathBuf),
     Builtin(String),
 }
+
+static TARGET_DIR_SHOULD_BE_SET_EXPLICITLY: RelPath =
+    RelPath::BUILD.join("target_dir_should_be_set_explicitly");
 
 fn main() {
     if env::var("RUST_BACKTRACE").is_err() {
@@ -188,8 +192,7 @@ fn main() {
 
     {
         // Make sure we always explicitly specify the target dir
-        let target =
-            path::RelPath::BUILD.join("target_dir_should_be_set_explicitly").to_path(&dirs);
+        let target = TARGET_DIR_SHOULD_BE_SET_EXPLICITLY.to_path(&dirs);
         env::set_var("CARGO_TARGET_DIR", &target);
         let _ = std::fs::remove_file(&target);
         std::fs::File::create(target).unwrap();
